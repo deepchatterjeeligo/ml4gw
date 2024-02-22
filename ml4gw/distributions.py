@@ -48,8 +48,8 @@ class Sine(dist.TransformedDistribution):
 
     def __init__(
         self,
-        low: float = torch.as_tensor(0),
-        high: float = torch.as_tensor(torch.pi),
+        low: torch.Tensor = torch.as_tensor(0),
+        high: torch.Tensor = torch.as_tensor(torch.pi),
         validate_args=None,
     ):
         base_dist = Cosine(
@@ -72,10 +72,12 @@ class LogUniform(dist.TransformedDistribution):
     Sample from a log uniform distribution
     """
 
-    def __init__(self, low: float, high: float, validate_args=None):
+    def __init__(
+        self, low: torch.Tensor, high: torch.Tensor, validate_args=None
+    ):
         base_dist = dist.Uniform(
-            torch.as_tensor(low).log(),
-            torch.as_tensor(high).log(),
+            low.log(),
+            high.log(),
             validate_args,
         )
         super().__init__(
@@ -88,9 +90,9 @@ class LogUniform(dist.TransformedDistribution):
 class LogNormal(dist.LogNormal):
     def __init__(
         self,
-        mean: float,
-        std: float,
-        low: Optional[float] = None,
+        mean: torch.Tensor,
+        std: torch.Tensor,
+        low: Optional[torch.Tensor] = None,
         validate_args=None,
     ):
         self.low = low
@@ -104,33 +106,40 @@ class LogNormal(dist.LogNormal):
 class PowerLaw(dist.TransformedDistribution):
     """
     Sample from a power law distribution,
-    .. math::
-        p(x) \approx x^{\alpha}.
 
-    Index alpha cannot be 0, since it is equivalent to a Uniform distribution.
-    This could be used, for example, as a universal distribution of
+    .. math::
+        p(x) \\approx x^{\\alpha}.
+
+    Index :math:`\\alpha \\neq 0`; use Uniform distribution instead.
+    Examples of power law distributions include the distribution of
     signal-to-noise ratios (SNRs) from uniformly volume distributed
-    sources
+    sources, with ``index = -4``.
+
     .. math::
 
-       p(\rho) = 3*\rho_0^3 / \rho^4
+       p(\\rho) = 3 \\rho_0^3 / \\rho^4
 
-    where :math:`\rho_0` is a representative minimum SNR
+    where :math:`\\rho_0` is a representative minimum SNR
     considered for detection. See, for example,
     `Schutz (2011) <https://arxiv.org/abs/1102.5421>`_.
-    Or, for example, ``index=2`` for uniform in Euclidean volume.
+    Or, for example, ``index = 2`` for distance distribution
+    uniform in Euclidean volume.
     """
 
     support = dist.constraints.nonnegative
 
     def __init__(
-        self, minimum: float, maximum: float, index: int, validate_args=None
+        self,
+        minimum: torch.Tensor,
+        maximum: torch.Tensor,
+        index: int,
+        validate_args=None,
     ):
         if index == 0:
             raise RuntimeError("Index of 0 is the same as Uniform")
         elif index == -1:
-            base_min = torch.as_tensor(minimum).log()
-            base_max = torch.as_tensor(maximum).log()
+            base_min = minimum.log()
+            base_max = maximum.log()
             transforms = [dist.ExpTransform()]
         else:
             index_plus = index + 1

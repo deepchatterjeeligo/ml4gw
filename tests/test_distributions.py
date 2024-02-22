@@ -11,7 +11,9 @@ from ml4gw import distributions
 
 
 def test_log_uniform():
-    sampler = distributions.LogUniform(torch.e, torch.e**2)
+    sampler = distributions.LogUniform(
+        torch.as_tensor(torch.e), torch.as_tensor(torch.e**2)
+    )
     samples = sampler.sample((10,))
     assert len(samples) == 10
     assert ((torch.e <= samples) & (torch.e**2 <= 100)).all()
@@ -42,8 +44,10 @@ def test_cosine():
 
 def test_power_law():
     """Test PowerLaw distribution"""
-    ref_snr = 8
-    sampler = distributions.PowerLaw(ref_snr, float("inf"), index=-4)
+    ref_snr = torch.as_tensor(8.0)
+    sampler = distributions.PowerLaw(
+        ref_snr, torch.as_tensor(torch.inf), index=-4.0
+    )
     samples = sampler.sample((10000,)).numpy()
     # check x^-4 behavior
     counts, ebins = np.histogram(samples, bins=100)
@@ -57,9 +61,9 @@ def test_power_law():
     # popt[1] is the index
     assert popt[1] == pytest.approx(-4, rel=1e-1)
 
-    min_dist = 10
-    max_dist = 1000
-    uniform_in_volume = distributions.PowerLaw(min_dist, max_dist, index=2)
+    min_dist = torch.as_tensor(10)
+    max_dist = torch.as_tensor(1000)
+    uniform_in_volume = distributions.PowerLaw(min_dist, max_dist, index=2.0)
     samples = uniform_in_volume.sample((10000,)).numpy()
     # check d^2 behavior
     counts, ebins = np.histogram(samples, bins=100)
